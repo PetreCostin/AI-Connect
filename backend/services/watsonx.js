@@ -41,7 +41,7 @@ class WatsonxService {
       );
 
       this.accessToken = response.data.access_token;
-      // Token expires in seconds, convert to milliseconds
+      // Token expires_in is in seconds, convert to milliseconds for Date.now() comparison
       this.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
       
       return this.accessToken;

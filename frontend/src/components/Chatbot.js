@@ -11,7 +11,6 @@ import './Chatbot.css';
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Sample prompts for users
@@ -34,6 +33,7 @@ const Chatbot = () => {
   // Add welcome message on component mount
   useEffect(() => {
     const welcomeMessage = {
+      id: Date.now(),
       text: "Hello! I'm your AI assistant powered by IBM watsonx. I'm here to help you with compliance and support questions. How can I assist you today?",
       sender: 'bot',
       timestamp: new Date().toISOString()
@@ -45,13 +45,13 @@ const Chatbot = () => {
   const sendMessage = async (messageText) => {
     // Add user message to chat
     const userMessage = {
+      id: Date.now(),
       text: messageText,
       sender: 'user',
       timestamp: new Date().toISOString()
     };
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
-    setError(null);
 
     try {
       // Call backend API
@@ -62,6 +62,7 @@ const Chatbot = () => {
       if (response.data.success) {
         // Add bot response to chat
         const botMessage = {
+          id: Date.now() + 1,
           text: response.data.response,
           sender: 'bot',
           timestamp: response.data.timestamp
@@ -73,10 +74,10 @@ const Chatbot = () => {
     } catch (err) {
       console.error('Error sending message:', err);
       const errorMessage = err.response?.data?.error || err.message || 'Failed to connect to the server';
-      setError(errorMessage);
       
       // Add error message as bot response
       const errorBotMessage = {
+        id: Date.now() + 1,
         text: `I'm sorry, I encountered an error: ${errorMessage}. Please try again.`,
         sender: 'bot',
         timestamp: new Date().toISOString()
@@ -90,12 +91,12 @@ const Chatbot = () => {
   // Clear chat history
   const clearChat = () => {
     const welcomeMessage = {
+      id: Date.now(),
       text: "Chat cleared. How can I help you?",
       sender: 'bot',
       timestamp: new Date().toISOString()
     };
     setMessages([welcomeMessage]);
-    setError(null);
   };
 
   // Handle sample prompt click
@@ -144,8 +145,8 @@ const Chatbot = () => {
       )}
 
       <div className="messages-container">
-        {messages.map((message, index) => (
-          <Message key={index} message={message} />
+        {messages.map((message) => (
+          <Message key={message.id} message={message} />
         ))}
         
         {isLoading && (

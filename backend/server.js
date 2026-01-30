@@ -93,7 +93,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log('='.repeat(50));
   console.log(`AI Connect Backend Server`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
