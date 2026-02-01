@@ -1,109 +1,83 @@
-import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
-import Message from './Message';
-import ChatInput from './ChatInput';
-import './Chatbot.css';
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
+import Message from "./Message";
+import ChatInput from "./ChatInput";
+import "./Chatbot.css";
 
-/**
- * Chatbot Component
- * Main chatbot interface with message history and input
- */
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Sample prompts for users
   const samplePrompts = [
     "What is IBM watsonx?",
     "How can AI help with compliance?",
     "Explain machine learning basics",
-    "What are the benefits of AI automation?"
+    "Benefits of AI automation?",
   ];
 
-  // Scroll to bottom when messages change
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Add welcome message on component mount
-  useEffect(() => {
-    const welcomeMessage = {
-      id: Date.now(),
-      text: "Hello! I'm your AI assistant powered by IBM watsonx. I'm here to help you with compliance and support questions. How can I assist you today?",
-      sender: 'bot',
-      timestamp: new Date().toISOString()
-    };
-    setMessages([welcomeMessage]);
+    setMessages([
+      {
+        id: Date.now(),
+        text: "👋 Hi! I’m your AI assistant powered by IBM watsonx. How can I help you today?",
+        sender: "bot",
+        timestamp: new Date().toISOString(),
+      },
+    ]);
   }, []);
 
-  // Send message to backend
-  const sendMessage = async (messageText) => {
-    // Add user message to chat
-    const userMessage = {
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async (text) => {
+    const userMsg = {
       id: Date.now(),
-      text: messageText,
-      sender: 'user',
-      timestamp: new Date().toISOString()
+      text,
+      sender: "user",
+      timestamp: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, userMessage]);
+
+    setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
 
     try {
-      // Call backend API
-      const response = await axios.post('/api/chat', {
-        message: messageText
-      });
+      const res = await axios.post("/api/chat", { message: text });
 
-      if (response.data.success) {
-        // Add bot response to chat
-        const botMessage = {
+      setMessages((prev) => [
+        ...prev,
+        {
           id: Date.now() + 1,
-          text: response.data.response,
-          sender: 'bot',
-          timestamp: response.data.timestamp
-        };
-        setMessages(prev => [...prev, botMessage]);
-      } else {
-        throw new Error(response.data.error || 'Failed to get response');
-      }
+          text: res.data.response,
+          sender: "bot",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
     } catch (err) {
-      console.error('Error sending message:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Failed to connect to the server';
-      
-      // Add error message as bot response
-      const errorBotMessage = {
-        id: Date.now() + 1,
-        text: `I'm sorry, I encountered an error: ${errorMessage}. Please try again.`,
-        sender: 'bot',
-        timestamp: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, errorBotMessage]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          text: "⚠️ Something went wrong. Please try again.",
+          sender: "bot",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Clear chat history
   const clearChat = () => {
-    const welcomeMessage = {
-      id: Date.now(),
-      text: "Chat cleared. How can I help you?",
-      sender: 'bot',
-      timestamp: new Date().toISOString()
-    };
-    setMessages([welcomeMessage]);
-  };
-
-  // Handle sample prompt click
-  const handlePromptClick = (prompt) => {
-    if (!isLoading) {
-      sendMessage(prompt);
-    }
+    setMessages([
+      {
+        id: Date.now(),
+        text: "Chat cleared ✨ How can I help now?",
+        sender: "bot",
+        timestamp: new Date().toISOString(),
+      },
+    ]);
   };
 
   return (
@@ -113,31 +87,44 @@ const Chatbot = () => {
           <h1>AI Connect</h1>
           <p>Powered by IBM watsonx</p>
         </div>
-        <button 
-          className="clear-button" 
-          onClick={clearChat}
-          disabled={isLoading}
-          title="Clear chat"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </button>
+
+        {/* AI identity indicator (dynamic) */}
+        <div className="ai-identity" aria-live="polite">
+          <span className={`ai-dot ${isLoading ? "processing" : "online"}`} />
+          <div className="ai-meta">
+            <span className="ai-name">watsonx</span>
+            <span className="ai-status">
+              {isLoading ? "Assistant • thinking…" : "Assistant • online"}
+            </span>
+          </div>
+        </div>
+
+        <div className="header-actions">
+          <button
+            className="clear-button"
+            onClick={clearChat}
+            title="Clear chat"
+          >
+            🗑️
+          </button>
+          <span className="secure-badge" title="Encrypted conversation">
+            🔒 Secure
+          </span>
+        </div>
       </div>
 
-      {/* Sample prompts - show only when chat is fresh */}
-      {messages.length === 1 && !isLoading && (
-        <div className="sample-prompts">
-          <p className="prompts-title">Try asking:</p>
+      {messages.length === 1 && (
+        <div className="sample-prompts" aria-hidden={false}>
+          <p className="prompts-title">Quick prompts</p>
           <div className="prompts-grid">
-            {samplePrompts.map((prompt, index) => (
+            {samplePrompts.map((p, i) => (
               <button
-                key={index}
-                className="prompt-button"
-                onClick={() => handlePromptClick(prompt)}
+                key={i}
+                className={`prompt-button prompt-chip`}
+                onClick={() => sendMessage(p)}
+                aria-label={`Send prompt: ${p}`}
               >
-                {prompt}
+                {p}
               </button>
             ))}
           </div>
@@ -145,25 +132,24 @@ const Chatbot = () => {
       )}
 
       <div className="messages-container">
-        {messages.map((message) => (
-          <Message key={message.id} message={message} />
+        {messages.map((msg) => (
+          <Message key={msg.id} message={msg} />
         ))}
-        
+
         {isLoading && (
           <div className="typing-indicator">
-            <div className="typing-dot"></div>
-            <div className="typing-dot"></div>
-            <div className="typing-dot"></div>
+            <span className="typing-dot"></span>
+            <span className="typing-dot"></span>
+            <span className="typing-dot"></span>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
-      <ChatInput 
-        onSendMessage={sendMessage} 
-        disabled={isLoading}
-      />
+      <div className="chat-input-wrapper">
+        <ChatInput onSendMessage={sendMessage} disabled={isLoading} />
+      </div>
     </div>
   );
 };
